@@ -62,7 +62,8 @@ struct ContentView: View {
     let videoCapture = VideoCapture()
     
     var body: some View {
-        CameraView(videoCapture: videoCapture)
+        ZStack{
+            CameraView(videoCapture: videoCapture)
             .onAppear {
                 print("Camera view appeared")
                 requestCameraPermission {
@@ -74,6 +75,22 @@ struct ContentView: View {
                 self.videoCapture.stop()
             }
             .edgesIgnoringSafeArea(.all)
+
+            VStack{
+                Spacer()
+                Button(action: loadModel, label: {
+                    Text ("Start Model")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(width: 200 ,height: 50)
+                        .background(Color.gray)
+                        .cornerRadius(25)
+                })
+                .padding(.bottom,50)
+                
+            }
+        }
     }
 
     // Helper function to request camera permission
@@ -96,5 +113,9 @@ struct ContentView: View {
         @unknown default:
             print("Unknown camera authorization status.")
         }
+    }
+
+    func loadModel(){
+        print("model loading")
     }
 }
