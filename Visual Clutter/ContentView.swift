@@ -68,6 +68,7 @@ struct ContentView: View {
                 print("Camera view appeared")
                 requestCameraPermission {
                     self.videoCapture.start()
+                    self.videoCapture.setUp()
                 }
             }
             .onDisappear {
@@ -113,6 +114,61 @@ struct ContentView: View {
         @unknown default:
             print("Unknown camera authorization status.")
         }
+    }
+
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+    
+        // Pass the pixel buffer (video frame) to the Core ML model using Vision
+        processFrame(pixelBuffer: pixelBuffer)
+    }
+
+    // Method to process the frame using Vision and Core ML
+    func processFrame(pixelBuffer: CVPixelBuffer) {
+        // Load the Core ML model
+        let model = try! yolov8n(configuration: .init()).model
+    
+        // Create a Vision request with the Core ML model
+        let request = VNCoreMLRequest(model: model) { request, error in
+            if let results = request.results as? [VNRecognizedObjectObservation] {
+                // Handle detected objects here
+                self.handleDetections(results)
+            }
+        }
+    
+        // Perform the Vision request on the pixel buffer (video frame)
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+        try? handler.perform([request])
+    }
+
+    func handleDetections(_ results: [VNRecognizedObjectObservation]) {
+        var newBoxes: [CGRect] = []
+        var newLabels: [String] = []
+
+        print(results)
+        
+        // for result in results {
+        //     // Get the bounding box and label for the detected object
+        //     let boundingBox = result.boundingBox
+        //     let label = result.labels.first?.identifier ?? "Unknown"
+            
+        //     // Convert bounding box to screen coordinates (as shown earlier)
+        //     let screenWidth = previewLayer.frame.width
+        //     let screenHeight = previewLayer.frame.height
+        //     let x = boundingBox.origin.x * screenWidth
+        //     let y = (1 - boundingBox.origin.y - boundingBox.height) * screenHeight
+        //     let width = boundingBox.width * screenWidth
+        //     let height = boundingBox.height * screenHeight
+            
+        //     newBoxes.append(CGRect(x: x, y: y, width: width, height: height))
+        //     newLabels.append(label)
+        // }
+        
+        // // Update UI with the new bounding boxes and labels
+        // DispatchQueue.main.async {
+        //     self.boxes = newBoxes
+        //     self.labels = newLabels
+        // }
     }
 
     func loadModel(){
