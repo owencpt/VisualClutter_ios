@@ -68,8 +68,9 @@ struct ContentView: View {
                 print("Camera view appeared")
                 requestCameraPermission {
                     self.videoCapture.start()
-                    self.videoCapture.setUp()
                 }
+                self.videoCapture.setUp()
+                
             }
             .onDisappear {
                 print("Camera view disappeared")
@@ -79,7 +80,7 @@ struct ContentView: View {
 
             VStack{
                 Spacer()
-                Button(action: loadModel, label: {
+                Button(action: captureOutput, label: {
                     Text ("Start Model")
                         .font(.headline)
                         .foregroundColor(.white)
