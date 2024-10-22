@@ -24,6 +24,7 @@
 		946C3E052CAE58DA00B20BC8 /* yolov8s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 946C3DFE2CAE58DA00B20BC8 /* yolov8s.mlpackage */; };
 		946C3E062CAE58DA00B20BC8 /* yolov8x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 946C3DFF2CAE58DA00B20BC8 /* yolov8x.mlpackage */; };
 		946C3E082CAEDB3D00B20BC8 /* Control.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E072CAEDB3D00B20BC8 /* Control.swift */; };
+		946C3E0C2CC1E27800B20BC8 /* yolov8n-seg.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E0B2CC1E27800B20BC8 /* yolov8n-seg.mlpackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,6 +65,7 @@
 		946C3DFE2CAE58DA00B20BC8 /* yolov8s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8s.mlpackage; sourceTree = "<group>"; };
 		946C3DFF2CAE58DA00B20BC8 /* yolov8x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8x.mlpackage; sourceTree = "<group>"; };
 		946C3E072CAEDB3D00B20BC8 /* Control.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Control.swift; sourceTree = "<group>"; };
+		946C3E0B2CC1E27800B20BC8 /* yolov8n-seg.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8n-seg.mlpackage"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -167,6 +169,7 @@
 				946C3DFB2CAE58DA00B20BC8 /* yolov8l.mlpackage */,
 				946C3DFC2CAE58DA00B20BC8 /* yolov8m.mlpackage */,
 				946C3DFD2CAE58DA00B20BC8 /* yolov8n.mlpackage */,
+				946C3E0B2CC1E27800B20BC8 /* yolov8n-seg.mlpackage */,
 				946C3DFE2CAE58DA00B20BC8 /* yolov8s.mlpackage */,
 				946C3DFF2CAE58DA00B20BC8 /* yolov8x.mlpackage */,
 			);
@@ -311,6 +314,7 @@
 				946C3E042CAE58DA00B20BC8 /* yolov8n.mlpackage in Sources */,
 				946C3E032CAE58DA00B20BC8 /* yolov8m.mlpackage in Sources */,
 				946C3E082CAEDB3D00B20BC8 /* Control.swift in Sources */,
+				946C3E0C2CC1E27800B20BC8 /* yolov8n-seg.mlpackage in Sources */,
 				946C3DF92CAE580B00B20BC8 /* ThresholdProvider.swift in Sources */,
 				942A33142CAD26EC00C11CEB /* Visual_ClutterApp.swift in Sources */,
 				946C3E022CAE58DA00B20BC8 /* yolov8l.mlpackage in Sources */,

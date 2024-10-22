@@ -14,6 +14,7 @@
 import AVFoundation
 import CoreVideo
 import UIKit
+import Vision
 
 // Defines the protocol for handling video frame capture events.
 public protocol VideoCaptureDelegate: AnyObject {
@@ -162,6 +163,10 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
         from connection: AVCaptureConnection
     ) {
         delegate?.videoCapture(self, didCaptureVideoFrame: sampleBuffer)
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+    
+        // Pass the pixel buffer (video frame) to the Core ML model using Vision
+        processFrame(pixelBuffer: pixelBuffer)
     }
 
     public func captureOutput(
@@ -169,5 +174,87 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
         from connection: AVCaptureConnection
     ) {
         // Optionally handle dropped frames, e.g., due to full buffer.
+    }
+    
+    // Method to process the frame using Vision and Core ML
+    func processFrame(pixelBuffer: CVPixelBuffer) {
+        // Load the Core ML model
+        let model = try! yolov8n_seg(configuration: .init()).model
+//        print("model loaded")
+        
+        //TODO: set preference for hardware
+        
+        /// VNCoreMLModel
+        let detector = try! VNCoreMLModel(for: model)
+        detector.featureProvider = ThresholdProvider()
+    
+        // Create a Vision request with the Core ML model
+        let request = VNCoreMLRequest(model: detector) { request, error in
+//            print(request.results)
+            if let results = request.results as? [VNCoreMLFeatureValueObservation] {
+                // Handle detected objects here
+                print("handler")
+                self.handleDetections(results)
+            }
+        }
+        
+        
+    
+        // Perform the Vision request on the pixel buffer (video frame)
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+        try? handler.perform([request])
+    }
+    
+    func handleDetections(_ results: [VNCoreMLFeatureValueObservation]) {
+        var newBoxes: [CGRect] = []
+        var newLabels: [String] = []
+        
+        
+       let multiArray = results.first?.featureValue.multiArrayValue {
+
+            // The MLMultiArray typically contains a 2D or 3D array, depending on the model.
+            // For a simple segmentation model, it's likely to be 2D, where each entry is a class label.
+            
+            // Assuming the segmentation labels are stored in an MLMultiArray
+            let labelMap = ["Background", "Object1", "Object2", ...] // Define your label map based on the model's classes.
+            
+            // Iterate through the MLMultiArray
+            let height = multiArray.shape[0].intValue
+            let width = multiArray.shape[1].intValue
+            
+            for y in 0..<height {
+                for x in 0..<width {
+                    let index = y * width + x
+                    let labelIndex = multiArray[index].intValue
+                    let label = labelMap[labelIndex]
+                    print("Pixel (\(x), \(y)) is labeled as \(label)")
+                }
+            }
+        }
+        
+        print(multiArray)
+    }
+}
+
+if let results = request.results as? [VNCoreMLFeatureValueObservation],
+   let multiArray = results.first?.featureValue.multiArrayValue {
+
+    // The MLMultiArray typically contains a 2D or 3D array, depending on the model.
+    // For a simple segmentation model, it's likely to be 2D, where each entry is a class label.
+    
+    // Assuming the segmentation labels are stored in an MLMultiArray
+    let labelMap = ["Background", "Object1", "Object2", ...] // Define your label map based on the model's classes.
+    
+    // Iterate through the MLMultiArray
+    let height = multiArray.shape[0].intValue
+    let width = multiArray.shape[1].intValue
+    
+    for y in 0..<height {
+        for x in 0..<width {
+            let index = y * width + x
+            let labelIndex = multiArray[index].intValue
+            let label = labelMap[labelIndex]
+            print("Pixel (\(x), \(y)) is labeled as \(label)")
+        }
     }
 }
