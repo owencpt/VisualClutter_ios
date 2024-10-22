@@ -194,7 +194,9 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
             if let results = request.results as? [VNCoreMLFeatureValueObservation] {
                 // Handle detected objects here
                 print("handler")
-                self.handleDetections(results)
+                if let multiArray = results.first?.featureValue.multiArrayValue{
+                    self.handleDetections(multiArray: multiArray)
+                }
             }
         }
         
@@ -205,56 +207,67 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
         try? handler.perform([request])
     }
     
-    func handleDetections(_ results: [VNCoreMLFeatureValueObservation]) {
+    func handleDetections(multiArray: MLMultiArray) {
         var newBoxes: [CGRect] = []
         var newLabels: [String] = []
         
-        
-       let multiArray = results.first?.featureValue.multiArrayValue {
+//        print("Feature value type: \(String(describing: results.first?.featureValue))")
 
-            // The MLMultiArray typically contains a 2D or 3D array, depending on the model.
-            // For a simple segmentation model, it's likely to be 2D, where each entry is a class label.
-            
+        
+        
+//
+    //            // The MLMultiArray typically contains a 2D or 3D array, depending on the model.
+    //            // For a simple segmentation model, it's likely to be 2D, where each entry is a class label.
+    //
             // Assuming the segmentation labels are stored in an MLMultiArray
-            let labelMap = ["Background", "Object1", "Object2", ...] // Define your label map based on the model's classes.
+           let labelMap = ["person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateborad", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "brocolli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair dryer", "toothbrush"]
             
-            // Iterate through the MLMultiArray
-            let height = multiArray.shape[0].intValue
-            let width = multiArray.shape[1].intValue
-            
+//            // Iterate through the MLMultiArray
+//            let height = multiArray.shape[0].intValue
+//            let width = multiArray.shape[1].intValue
+//            
+//            for y in 0..<height {
+//                for x in 0..<width {
+//                    let index = y * width + x
+//                    let labelIndex = multiArray[index].intValue
+//                    let label = labelMap[labelIndex]
+//                    print("Pixel (\(x), \(y)) is labeled as \(label)")
+//                }
+//            }
+        
+        // Get the dimensions
+            let height = multiArray.shape[2].intValue   // 160
+            let width = multiArray.shape[3].intValue    // 160
+            let numClasses = multiArray.shape[1].intValue // 32 (number of classes)
+
+            // Iterate through each pixel
             for y in 0..<height {
                 for x in 0..<width {
-                    let index = y * width + x
-                    let labelIndex = multiArray[index].intValue
-                    let label = labelMap[labelIndex]
-                    print("Pixel (\(x), \(y)) is labeled as \(label)")
+                    var maxClassIndex = 0
+                    var maxProb: Float = -Float.infinity
+                    
+                    // Find the class with the highest probability for the current pixel (x, y)
+                    for c in 0..<numClasses {
+                        // Create NSNumber array for indices
+                        
+                        let index: [NSNumber] = [0, NSNumber(value: c), NSNumber(value: y), NSNumber(value: x)]
+                        
+                        // Retrieve the value as NSNumber
+                        let probability = multiArray[index]
+                        
+                        // Get the Float value from NSNumber
+                        let probValue = probability.floatValue
+                        
+                        if probValue > maxProb {
+                            maxProb = probValue
+                            maxClassIndex = c
+                        }
+                    }
+
+                    print("Pixel (\(x), \(y)) is classified as class \(maxClassIndex) \(labelMap[maxClassIndex]) with max probability \(maxProb)")
                 }
             }
-        }
         
         print(multiArray)
-    }
-}
-
-if let results = request.results as? [VNCoreMLFeatureValueObservation],
-   let multiArray = results.first?.featureValue.multiArrayValue {
-
-    // The MLMultiArray typically contains a 2D or 3D array, depending on the model.
-    // For a simple segmentation model, it's likely to be 2D, where each entry is a class label.
-    
-    // Assuming the segmentation labels are stored in an MLMultiArray
-    let labelMap = ["Background", "Object1", "Object2", ...] // Define your label map based on the model's classes.
-    
-    // Iterate through the MLMultiArray
-    let height = multiArray.shape[0].intValue
-    let width = multiArray.shape[1].intValue
-    
-    for y in 0..<height {
-        for x in 0..<width {
-            let index = y * width + x
-            let labelIndex = multiArray[index].intValue
-            let label = labelMap[labelIndex]
-            print("Pixel (\(x), \(y)) is labeled as \(label)")
-        }
     }
 }
