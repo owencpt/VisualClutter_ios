@@ -24,7 +24,9 @@
 		946C3E052CAE58DA00B20BC8 /* yolov8s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 946C3DFE2CAE58DA00B20BC8 /* yolov8s.mlpackage */; };
 		946C3E062CAE58DA00B20BC8 /* yolov8x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 946C3DFF2CAE58DA00B20BC8 /* yolov8x.mlpackage */; };
 		946C3E082CAEDB3D00B20BC8 /* Control.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E072CAEDB3D00B20BC8 /* Control.swift */; };
-		946C3E0C2CC1E27800B20BC8 /* yolov8n-seg.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E0B2CC1E27800B20BC8 /* yolov8n-seg.mlpackage */; };
+		946C3E0E2CCA21F300B20BC8 /* Box.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E0D2CCA21F300B20BC8 /* Box.swift */; };
+		946C3E102CCA235800B20BC8 /* imconvert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E0F2CCA235800B20BC8 /* imconvert.swift */; };
+		946C3E592CDA257200B20BC8 /* yolo11n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E582CDA257200B20BC8 /* yolo11n.mlpackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -65,7 +67,9 @@
 		946C3DFE2CAE58DA00B20BC8 /* yolov8s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8s.mlpackage; sourceTree = "<group>"; };
 		946C3DFF2CAE58DA00B20BC8 /* yolov8x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8x.mlpackage; sourceTree = "<group>"; };
 		946C3E072CAEDB3D00B20BC8 /* Control.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Control.swift; sourceTree = "<group>"; };
-		946C3E0B2CC1E27800B20BC8 /* yolov8n-seg.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8n-seg.mlpackage"; sourceTree = SOURCE_ROOT; };
+		946C3E0D2CCA21F300B20BC8 /* Box.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Box.swift; sourceTree = "<group>"; };
+		946C3E0F2CCA235800B20BC8 /* imconvert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = imconvert.swift; sourceTree = "<group>"; };
+		946C3E582CDA257200B20BC8 /* yolo11n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11n.mlpackage; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +122,8 @@
 			children = (
 				946C3DF72CAE580B00B20BC8 /* Utilities */,
 				946C3DF32CAE579000B20BC8 /* VideoCapture.swift */,
+				946C3E0F2CCA235800B20BC8 /* imconvert.swift */,
+				946C3E0D2CCA21F300B20BC8 /* Box.swift */,
 				946C3E072CAEDB3D00B20BC8 /* Control.swift */,
 				942A33132CAD26EC00C11CEB /* Visual_ClutterApp.swift */,
 				942A33152CAD26EC00C11CEB /* ContentView.swift */,
@@ -169,7 +175,7 @@
 				946C3DFB2CAE58DA00B20BC8 /* yolov8l.mlpackage */,
 				946C3DFC2CAE58DA00B20BC8 /* yolov8m.mlpackage */,
 				946C3DFD2CAE58DA00B20BC8 /* yolov8n.mlpackage */,
-				946C3E0B2CC1E27800B20BC8 /* yolov8n-seg.mlpackage */,
+				946C3E582CDA257200B20BC8 /* yolo11n.mlpackage */,
 				946C3DFE2CAE58DA00B20BC8 /* yolov8s.mlpackage */,
 				946C3DFF2CAE58DA00B20BC8 /* yolov8x.mlpackage */,
 			);
@@ -313,12 +319,14 @@
 				946C3E052CAE58DA00B20BC8 /* yolov8s.mlpackage in Sources */,
 				946C3E042CAE58DA00B20BC8 /* yolov8n.mlpackage in Sources */,
 				946C3E032CAE58DA00B20BC8 /* yolov8m.mlpackage in Sources */,
+				946C3E0E2CCA21F300B20BC8 /* Box.swift in Sources */,
 				946C3E082CAEDB3D00B20BC8 /* Control.swift in Sources */,
-				946C3E0C2CC1E27800B20BC8 /* yolov8n-seg.mlpackage in Sources */,
 				946C3DF92CAE580B00B20BC8 /* ThresholdProvider.swift in Sources */,
 				942A33142CAD26EC00C11CEB /* Visual_ClutterApp.swift in Sources */,
 				946C3E022CAE58DA00B20BC8 /* yolov8l.mlpackage in Sources */,
+				946C3E592CDA257200B20BC8 /* yolo11n.mlpackage in Sources */,
 				946C3E062CAE58DA00B20BC8 /* yolov8x.mlpackage in Sources */,
+				946C3E102CCA235800B20BC8 /* imconvert.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

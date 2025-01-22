@@ -58,40 +58,125 @@ struct CameraView: UIViewRepresentable {
     // Camera session starts and stops are now handled in ContentView
 }
 
+class BoundingBoxManager: ObservableObject {
+    @Published var boundingBoxes: [CGRect] = []
+}
+
 // SwiftUI view containing the camera preview
 struct ContentView: View {
-    let videoCapture = VideoCapture()
+    
+    @ObservedObject var videoCapture = VideoCapture()
+    let items = ["cup", "bottle", "knife", "spoon", "laptop", "scissors"]
+    
+    @State private var selectedItem: String? = nil
+    @State private var isMenuOpen = false
+    @State private var modelStatus = false
+
+
+
+    
     
     var body: some View {
         ZStack{
-            CameraView(videoCapture: videoCapture)
-            .onAppear {
-                print("Camera view appeared")
-                requestCameraPermission {
-                    self.videoCapture.start()
-                }
-//                videoCapture.setUp()
+            if modelStatus{
+                CameraView(videoCapture: videoCapture)
+                    .edgesIgnoringSafeArea(.all)
+
+            }else{
+                Color.white
+                    .ignoresSafeArea(.all)
                 
             }
-            .onDisappear {
-                print("Camera view disappeared")
-                self.videoCapture.stop()
+            
+            // Draws a rectangle around the object only when the model is turned on
+            
+            if modelStatus{
+                Rectangle()
+                    .stroke(Color.red, lineWidth: 2)
+                    .frame(width: videoCapture.rect.width * UIScreen.main.bounds.width,
+                           height: videoCapture.rect.height * UIScreen.main.bounds.height)
+                    .position(x: videoCapture.rect.midX * UIScreen.main.bounds.width,
+                              y: (1 - videoCapture.rect.midY) * UIScreen.main.bounds.height) // Flip Y-axis for Vision bounding box
             }
-            .edgesIgnoringSafeArea(.all)
-
-            VStack{
+            
+        
+            VStack(spacing: 20) {
+                
                 Spacer()
-                Button(action: loadModel, label: {
-                    Text ("Start Model")
+                
+                Button(action: { isMenuOpen = true }, label: {
+                    Text(videoCapture.selected.capitalized)
                         .font(.headline)
                         .foregroundColor(.white)
                         .padding()
-                        .frame(width: 200 ,height: 50)
+                        .frame(width: 200, height: 50)
                         .background(Color.gray)
                         .cornerRadius(25)
                 })
-                .padding(.bottom,50)
                 
+                Button(action: {
+                    if modelStatus {
+                        self.videoCapture.stop()                        
+                    }
+                    else{
+                        
+                        self.videoCapture.start()
+                    }
+                    modelStatus.toggle()
+                }, label: {
+                    Text(modelStatus ? "Stop Model" : "Start Model")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(width: 200, height: 50)
+                        .background(Color.gray)
+                        .cornerRadius(25)
+                })
+            }
+            
+
+            
+            if isMenuOpen{
+                                
+                VStack {
+                    
+                    Spacer().frame(height: 250)
+                    
+                    Text("Select Item For Detection")
+                        .font(.headline)
+                        
+
+                    ScrollView {
+                        
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.flexible(), spacing: 16), // First column
+                                GridItem(.flexible(), spacing: 16)  // Second column
+                            ],
+                            spacing: 16 // Vertical spacing between rows
+                        ) {
+                            ForEach(items, id: \.self) { item in
+                                Button(action: {
+                                    chooseItem(item: item)
+                                    isMenuOpen = false
+                                }) {
+                                    Text(item.capitalized)
+                                        .font(.body)
+                                        .padding()
+                                        .frame(maxWidth: .infinity)
+                                        .background(Color.gray)
+                                        .cornerRadius(8)
+                                        .foregroundColor(Color.white)
+                                }
+                                .padding(.horizontal, 16) // Adjust horizontal padding inside each grid cell
+                            }
+                        }
+                        .padding(16) // Add padding around the grid
+                        .border(Color.gray)
+                    }
+                    
+                }
+                                
             }
         }
     }
@@ -118,66 +203,17 @@ struct ContentView: View {
         }
     }
 
-//    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-//        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-//    
-//        // Pass the pixel buffer (video frame) to the Core ML model using Vision
-//        processFrame(pixelBuffer: pixelBuffer)
-//    }
-
-    // Method to process the frame using Vision and Core ML
-//    func processFrame(pixelBuffer: CVPixelBuffer) {
-//        // Load the Core ML model
-//        let model = try! yolov8n(configuration: .init()).model
-//        
-//        /// VNCoreMLModel
-//        let detector = try! VNCoreMLModel(for: model)
-//        detector.featureProvider = ThresholdProvider()
-//    
-//        // Create a Vision request with the Core ML model
-//        let request = VNCoreMLRequest(model: detector) { request, error in
-//            if let results = request.results as? [VNRecognizedObjectObservation] {
-//                // Handle detected objects here
-//                self.handleDetections(results)
-//            }
-//        }
-//    
-//        // Perform the Vision request on the pixel buffer (video frame)
-//        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
-//        try? handler.perform([request])
-//    }
-
-//    func handleDetections(_ results: [VNRecognizedObjectObservation]) {
-//        var newBoxes: [CGRect] = []
-//        var newLabels: [String] = []
-//
-//        print(results)
-//        
-//        // for result in results {
-//        //     // Get the bounding box and label for the detected object
-//        //     let boundingBox = result.boundingBox
-//        //     let label = result.labels.first?.identifier ?? "Unknown"
-//            
-//        //     // Convert bounding box to screen coordinates (as shown earlier)
-//        //     let screenWidth = previewLayer.frame.width
-//        //     let screenHeight = previewLayer.frame.height
-//        //     let x = boundingBox.origin.x * screenWidth
-//        //     let y = (1 - boundingBox.origin.y - boundingBox.height) * screenHeight
-//        //     let width = boundingBox.width * screenWidth
-//        //     let height = boundingBox.height * screenHeight
-//            
-//        //     newBoxes.append(CGRect(x: x, y: y, width: width, height: height))
-//        //     newLabels.append(label)
-//        // }
-//        
-//        // // Update UI with the new bounding boxes and labels
-//        // DispatchQueue.main.async {
-//        //     self.boxes = newBoxes
-//        //     self.labels = newLabels
-//        // }
-//    }
-
+    // Loads the model (activated by the start button)
     func loadModel(){
-        print("model loading")
+        requestCameraPermission {
+            self.videoCapture.start()
+        }
     }
+    
+    // alters the current item and sends it to videocapture for processing. (Used by each button on the object menu)
+    func chooseItem(item:String){
+        videoCapture.selected = item
+                
+    }
+    
 }

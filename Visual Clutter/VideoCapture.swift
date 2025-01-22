@@ -38,9 +38,14 @@ func bestCaptureDevice() -> AVCaptureDevice {
   }
 }
 
-public class VideoCapture: NSObject {
+public class VideoCapture: NSObject,ObservableObject {
     public var previewLayer: AVCaptureVideoPreviewLayer?
     public weak var delegate: VideoCaptureDelegate?
+    
+    @Published var rect: CGRect = .zero // Store the bounding box for object detection
+    @Published var label:String = "cup"
+    @Published var selected:String = "cup"
+
 
     let captureDevice = bestCaptureDevice()
     let captureSession = AVCaptureSession()
@@ -135,6 +140,12 @@ public class VideoCapture: NSObject {
     public func stop() {
         if captureSession.isRunning {
             captureSession.stopRunning()
+                    
+            for output in captureSession.outputs{
+                captureSession.removeOutput(output)
+            }
+                        
+            
         }
     }
 
@@ -158,17 +169,22 @@ public class VideoCapture: NSObject {
 
 // Extension to handle AVCaptureVideoDataOutputSampleBufferDelegate events.
 extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
+    
     public func captureOutput(
         _ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
         delegate?.videoCapture(self, didCaptureVideoFrame: sampleBuffer)
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-    
+        
+        
         // Pass the pixel buffer (video frame) to the Core ML model using Vision
         processFrame(pixelBuffer: pixelBuffer)
     }
-
+    
+    
+    
+    
     public func captureOutput(
         _ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
@@ -178,96 +194,53 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     // Method to process the frame using Vision and Core ML
     func processFrame(pixelBuffer: CVPixelBuffer) {
-        // Load the Core ML model
-        let model = try! yolov8n_seg(configuration: .init()).model
-//        print("model loaded")
         
         //TODO: set preference for hardware
+        let configuration = MLModelConfiguration()
+        configuration.computeUnits = .cpuAndGPU // Use both CPU and GPU
         
+        // Load the Core ML model
+        let model = try! yolov8l(configuration: .init()).model
+        //        print("model loaded")
+            
         /// VNCoreMLModel
         let detector = try! VNCoreMLModel(for: model)
         detector.featureProvider = ThresholdProvider()
-    
-        // Create a Vision request with the Core ML model
+        
+        
+        
+        // Retrieves Data From Results
+        
         let request = VNCoreMLRequest(model: detector) { request, error in
-//            print(request.results)
-            if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-                // Handle detected objects here
-                print("handler")
-                if let multiArray = results.first?.featureValue.multiArrayValue{
-                    self.handleDetections(multiArray: multiArray)
+            guard let results = request.results as? [VNRecognizedObjectObservation] else {
+                print("Failed to get results or cast to VNRecognizedObjectObservation")
+                return
+            }
+            
+            
+            for observation in results {
+                //Extract the first label and its confidence
+                if let topLabel = observation.labels.first {
+                    if self.selected == topLabel.identifier && topLabel.confidence >= 0.5{
+                        DispatchQueue.main.async {
+                            self.rect = observation.boundingBox
+                        }
+                        break
+                    }
+                    else{
+                        DispatchQueue.main.async {
+                            self.rect = .zero
+                        
+                        }
+                    }
                 }
             }
         }
-        
-        
-    
+
         // Perform the Vision request on the pixel buffer (video frame)
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
         try? handler.perform([request])
     }
     
-    func handleDetections(multiArray: MLMultiArray) {
-        var newBoxes: [CGRect] = []
-        var newLabels: [String] = []
-        
-//        print("Feature value type: \(String(describing: results.first?.featureValue))")
-
-        
-        
-//
-    //            // The MLMultiArray typically contains a 2D or 3D array, depending on the model.
-    //            // For a simple segmentation model, it's likely to be 2D, where each entry is a class label.
-    //
-            // Assuming the segmentation labels are stored in an MLMultiArray
-           let labelMap = ["person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateborad", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "brocolli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair dryer", "toothbrush"]
-            
-//            // Iterate through the MLMultiArray
-//            let height = multiArray.shape[0].intValue
-//            let width = multiArray.shape[1].intValue
-//            
-//            for y in 0..<height {
-//                for x in 0..<width {
-//                    let index = y * width + x
-//                    let labelIndex = multiArray[index].intValue
-//                    let label = labelMap[labelIndex]
-//                    print("Pixel (\(x), \(y)) is labeled as \(label)")
-//                }
-//            }
-        
-        // Get the dimensions
-            let height = multiArray.shape[2].intValue   // 160
-            let width = multiArray.shape[3].intValue    // 160
-            let numClasses = multiArray.shape[1].intValue // 32 (number of classes)
-
-            // Iterate through each pixel
-            for y in 0..<height {
-                for x in 0..<width {
-                    var maxClassIndex = 0
-                    var maxProb: Float = -Float.infinity
-                    
-                    // Find the class with the highest probability for the current pixel (x, y)
-                    for c in 0..<numClasses {
-                        // Create NSNumber array for indices
-                        
-                        let index: [NSNumber] = [0, NSNumber(value: c), NSNumber(value: y), NSNumber(value: x)]
-                        
-                        // Retrieve the value as NSNumber
-                        let probability = multiArray[index]
-                        
-                        // Get the Float value from NSNumber
-                        let probValue = probability.floatValue
-                        
-                        if probValue > maxProb {
-                            maxProb = probValue
-                            maxClassIndex = c
-                        }
-                    }
-
-                    print("Pixel (\(x), \(y)) is classified as class \(maxClassIndex) \(labelMap[maxClassIndex]) with max probability \(maxProb)")
-                }
-            }
-        
-        print(multiArray)
-    }
 }
+    
