@@ -27,6 +27,7 @@
 		946C3E0E2CCA21F300B20BC8 /* Box.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E0D2CCA21F300B20BC8 /* Box.swift */; };
 		946C3E102CCA235800B20BC8 /* imconvert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E0F2CCA235800B20BC8 /* imconvert.swift */; };
 		946C3E592CDA257200B20BC8 /* yolo11n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E582CDA257200B20BC8 /* yolo11n.mlpackage */; };
+		94B58E542D416302008833C5 /* colourhex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B58E532D416302008833C5 /* colourhex.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 		946C3E0D2CCA21F300B20BC8 /* Box.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Box.swift; sourceTree = "<group>"; };
 		946C3E0F2CCA235800B20BC8 /* imconvert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = imconvert.swift; sourceTree = "<group>"; };
 		946C3E582CDA257200B20BC8 /* yolo11n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11n.mlpackage; sourceTree = "<group>"; };
+		94B58E532D416302008833C5 /* colourhex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = colourhex.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -127,6 +129,7 @@
 				946C3E072CAEDB3D00B20BC8 /* Control.swift */,
 				942A33132CAD26EC00C11CEB /* Visual_ClutterApp.swift */,
 				942A33152CAD26EC00C11CEB /* ContentView.swift */,
+				94B58E532D416302008833C5 /* colourhex.swift */,
 				946C3E002CAE58DA00B20BC8 /* Models */,
 				942A33172CAD26ED00C11CEB /* Assets.xcassets */,
 				942A33192CAD26ED00C11CEB /* Preview Content */,
@@ -314,6 +317,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				942A33162CAD26EC00C11CEB /* ContentView.swift in Sources */,
+				94B58E542D416302008833C5 /* colourhex.swift in Sources */,
 				946C3DF42CAE579000B20BC8 /* VideoCapture.swift in Sources */,
 				946C3DF82CAE580B00B20BC8 /* BoundingBoxView.swift in Sources */,
 				946C3E052CAE58DA00B20BC8 /* yolov8s.mlpackage in Sources */,

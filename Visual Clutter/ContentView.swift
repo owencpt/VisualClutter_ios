@@ -10,9 +10,13 @@ import CoreMedia
 import AVFoundation
 import Vision
 
+
 // UIViewRepresentable to bridge UIKit's AVCaptureVideoPreviewLayer to SwiftUI
 struct CameraView: UIViewRepresentable {
     let videoCapture: VideoCapture
+    
+    @Binding var processedImage: CGImage? // Binding to receive the processed frame
+
 
     func makeCoordinator() -> Coordinator {
         Coordinator(videoCapture: videoCapture)
@@ -50,12 +54,35 @@ struct CameraView: UIViewRepresentable {
         return view
     }
     
-    // Updates the UIView when the SwiftUI view state changes
     func updateUIView(_ uiView: UIView, context: Context) {
-        videoCapture.previewLayer?.frame = uiView.bounds
-    }
+            // Update the preview layer's frame
+            videoCapture.previewLayer?.frame = uiView.bounds
+            
+            // If a processed image is available, display it
+            if let processedImage = processedImage {
+                // Remove previous layers
+                uiView.layer.sublayers?.removeAll()
+                
+                // Create a new layer for the processed image
+                let imageLayer = CALayer()
+                imageLayer.contents = processedImage
+                
+                // Scale the image layer to fill the view
+                imageLayer.frame = uiView.bounds
+                imageLayer.contentsGravity = .resizeAspectFill // Maintain aspect ratio while filling the view
+                
+                // Add the image layer to the view
+                uiView.layer.addSublayer(imageLayer)
+            } else {
+                // If no processed image, ensure only the live feed is displayed
+                uiView.layer.sublayers?.removeAll()
+                if let previewLayer = videoCapture.previewLayer {
+                    uiView.layer.addSublayer(previewLayer)
+                }
+            }
+        }
     
-    // Camera session starts and stops are now handled in ContentView
+
 }
 
 class BoundingBoxManager: ObservableObject {
@@ -79,7 +106,7 @@ struct ContentView: View {
     var body: some View {
         ZStack{
             if modelStatus{
-                CameraView(videoCapture: videoCapture)
+                CameraView(videoCapture: videoCapture, processedImage: $videoCapture.processedImage)
                     .edgesIgnoringSafeArea(.all)
 
             }else{
@@ -90,13 +117,22 @@ struct ContentView: View {
             
             // Draws a rectangle around the object only when the model is turned on
             
+//            if modelStatus{
+//                Rectangle()
+//                    .stroke(Color.red, lineWidth: 2)
+//                    .frame(width: videoCapture.rect.width * UIScreen.main.bounds.width,
+//                           height: videoCapture.rect.height * UIScreen.main.bounds.height)
+//                    .position(x: videoCapture.rect.midX * UIScreen.main.bounds.width,
+//                              y: (1 - videoCapture.rect.midY) * UIScreen.main.bounds.height) // Flip Y-axis for Vision bounding box
+//            }
+            
             if modelStatus{
                 Rectangle()
                     .stroke(Color.red, lineWidth: 2)
-                    .frame(width: videoCapture.rect.width * UIScreen.main.bounds.width,
-                           height: videoCapture.rect.height * UIScreen.main.bounds.height)
-                    .position(x: videoCapture.rect.midX * UIScreen.main.bounds.width,
-                              y: (1 - videoCapture.rect.midY) * UIScreen.main.bounds.height) // Flip Y-axis for Vision bounding box
+                    .frame(width: videoCapture.rect.width,
+                           height: videoCapture.rect.height)
+                    .position(x: videoCapture.rect.midX ,
+                              y: (videoCapture.rect.midY)) // Flip Y-axis for Vision bounding box
             }
             
         
@@ -104,19 +140,9 @@ struct ContentView: View {
                 
                 Spacer()
                 
-                Button(action: { isMenuOpen = true }, label: {
-                    Text(videoCapture.selected.capitalized)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(width: 200, height: 50)
-                        .background(Color.gray)
-                        .cornerRadius(25)
-                })
-                
                 Button(action: {
                     if modelStatus {
-                        self.videoCapture.stop()                        
+                        self.videoCapture.stop()
                     }
                     else{
                         
@@ -124,14 +150,35 @@ struct ContentView: View {
                     }
                     modelStatus.toggle()
                 }, label: {
-                    Text(modelStatus ? "Stop Model" : "Start Model")
+                    Text(modelStatus ? "Stop Looking For..." : "Start Looking For...")
                         .font(.headline)
                         .foregroundColor(.white)
                         .padding()
                         .frame(width: 200, height: 50)
-                        .background(Color.gray)
+                        .background(Color(hex: "#355070"))
                         .cornerRadius(25)
                 })
+                
+                Button(action: {
+                    isMenuOpen = true
+                }, label: {
+                    HStack {
+                        Text(videoCapture.selected.capitalized)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        // Add an icon (e.g., a chevron down) next to the text
+                        Image(systemName: "chevron.up")
+                            .foregroundColor(.white)
+                            .font(.system(size:12 ,weight: .black))
+                    }
+                    .padding()
+                    .frame(width: 200, height: 50)
+                    .background(Color(hex: "#818589"))
+                    .cornerRadius(25)
+                })
+                
+            
             }
             
 
@@ -140,10 +187,10 @@ struct ContentView: View {
                                 
                 VStack {
                     
-                    Spacer().frame(height: 250)
+//                    Spacer().frame(height: 50)
                     
-                    Text("Select Item For Detection")
-                        .font(.headline)
+//                    Text("Select Item For Detection")
+//                        .font(.headline)
                         
 
                     ScrollView {
@@ -162,6 +209,7 @@ struct ContentView: View {
                                 }) {
                                     Text(item.capitalized)
                                         .font(.body)
+                                        .fontWeight(.semibold)
                                         .padding()
                                         .frame(maxWidth: .infinity)
                                         .background(Color.gray)
@@ -171,12 +219,13 @@ struct ContentView: View {
                                 .padding(.horizontal, 16) // Adjust horizontal padding inside each grid cell
                             }
                         }
-                        .padding(16) // Add padding around the grid
-                        .border(Color.gray)
+                        .padding(16)
                     }
-                    
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .shadow(radius: 5)
+                    .frame(maxHeight: 225)
                 }
-                                
             }
         }
     }
