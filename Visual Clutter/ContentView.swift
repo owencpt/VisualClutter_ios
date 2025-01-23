@@ -110,8 +110,47 @@ struct ContentView: View {
                     .edgesIgnoringSafeArea(.all)
 
             }else{
+                
                 Color.white
                     .ignoresSafeArea(.all)
+                
+                Text("CVI Clutter Tool Kit")
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .foregroundColor(.black) // Neutral text color
+                    .padding(15) // Add padding inside the border
+                    .background(
+                        RoundedRectangle(cornerRadius: 20) // Rounded border
+                            .fill(Color.white) // White background
+                            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2) // Subtle shadow
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1) // Subtle border
+                            )
+                    )
+                
+                VStack {
+                    HStack {
+                        Text("MATT")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.black) // Neutral text color
+                            .padding(15) // Add padding inside the border
+                            .background(
+                                RoundedRectangle(cornerRadius: 20) // Rounded border
+                                    .fill(Color.white) // White background
+                                    .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2) // Subtle shadow
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1) // Subtle border
+                                    )
+                            )
+                        
+                            .padding(.horizontal,20)
+
+                    
+                        Spacer() // Push the text to the left
+                    }
+                    Spacer() // Push the HStack to the top
+                }
                 
             }
             
@@ -160,7 +199,7 @@ struct ContentView: View {
                 })
                 
                 Button(action: {
-                    isMenuOpen = true
+                    isMenuOpen.toggle() // Toggle the menu state
                 }, label: {
                     HStack {
                         Text(videoCapture.selected.capitalized)
@@ -168,7 +207,7 @@ struct ContentView: View {
                             .foregroundColor(.white)
                         
                         // Add an icon (e.g., a chevron down) next to the text
-                        Image(systemName: "chevron.up")
+                        Image(systemName: isMenuOpen ? "chevron.up" : "chevron.down") // Change icon based on menu state
                             .foregroundColor(.white)
                             .font(.system(size:12 ,weight: .black))
                     }
@@ -212,9 +251,17 @@ struct ContentView: View {
                                         .fontWeight(.semibold)
                                         .padding()
                                         .frame(maxWidth: .infinity)
-                                        .background(Color.gray)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 20) // Rounded border
+                                                .fill(Color.white) // White background
+                                                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2) // Subtle shadow
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 20)
+                                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1) // Subtle border
+                                                )
+                                        )
                                         .cornerRadius(8)
-                                        .foregroundColor(Color.white)
+                                        .foregroundColor(Color.black)
                                 }
                                 .padding(.horizontal, 16) // Adjust horizontal padding inside each grid cell
                             }
@@ -225,6 +272,7 @@ struct ContentView: View {
                     .cornerRadius(12)
                     .shadow(radius: 5)
                     .frame(maxHeight: 225)
+                    .padding(.horizontal,10)
                 }
             }
         }
