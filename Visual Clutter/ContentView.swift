@@ -98,6 +98,10 @@ struct ContentView: View {
     @State private var selectedItem: String? = nil
     @State private var isMenuOpen = false
     @State private var modelStatus = false
+    
+    @State private var scanTimeRemaining = 10
+    @State private var timer: Timer?
+    @State private var showTimeoutMessage = false
 
 
 
@@ -108,6 +112,39 @@ struct ContentView: View {
             if modelStatus{
                 CameraView(videoCapture: videoCapture, processedImage: $videoCapture.processedImage)
                     .edgesIgnoringSafeArea(.all)
+                
+                
+                // Add additional UI elements only when processedImage is nil
+                if videoCapture.processedImage == nil {
+                    VStack {
+                        if showTimeoutMessage {
+                            Text("Unable to find \(videoCapture.selected) on the current surface. Please try another one.")
+                                .foregroundColor(.white)
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                                .padding()
+                                .background(Color.black.opacity(0.7))
+                                .cornerRadius(10)
+                                .padding(.top, 50)
+                        } else {
+                            Text("No \(videoCapture.selected) detected. Please move the camera slowly to scan the area.")
+                                .foregroundColor(.white)
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                                .padding()
+                                .background(Color.black.opacity(0.7))
+                                .cornerRadius(10)
+                                .padding(.top, 50)
+                        }
+
+                        Spacer() // Push the text to the top
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity) // Ensure the VStack takes up the full screen
+                    .onAppear {
+                        startScanTimer()
+                    }
+                }
+                        
 
             }else{
                 
@@ -154,16 +191,6 @@ struct ContentView: View {
                 
             }
             
-            // Draws a rectangle around the object only when the model is turned on
-            
-//            if modelStatus{
-//                Rectangle()
-//                    .stroke(Color.red, lineWidth: 2)
-//                    .frame(width: videoCapture.rect.width * UIScreen.main.bounds.width,
-//                           height: videoCapture.rect.height * UIScreen.main.bounds.height)
-//                    .position(x: videoCapture.rect.midX * UIScreen.main.bounds.width,
-//                              y: (1 - videoCapture.rect.midY) * UIScreen.main.bounds.height) // Flip Y-axis for Vision bounding box
-//            }
             
             if modelStatus{
                 Rectangle()
@@ -311,6 +338,20 @@ struct ContentView: View {
     func chooseItem(item:String){
         videoCapture.selected = item
                 
+    }
+    
+    func startScanTimer() {
+        scanTimeRemaining = 10
+        showTimeoutMessage = false
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            if scanTimeRemaining > 0 {
+                scanTimeRemaining -= 1
+            } else {
+                timer?.invalidate()
+                // Show the timeout message after 10 seconds
+                showTimeoutMessage = true
+            }
+        }
     }
     
 }
