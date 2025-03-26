@@ -28,6 +28,7 @@
 		946C3E102CCA235800B20BC8 /* imconvert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E0F2CCA235800B20BC8 /* imconvert.swift */; };
 		946C3E592CDA257200B20BC8 /* yolo11n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 946C3E582CDA257200B20BC8 /* yolo11n.mlpackage */; };
 		94B58E542D416302008833C5 /* colourhex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B58E532D416302008833C5 /* colourhex.swift */; };
+		94D548692D465A7A003F5FE0 /* CIImageHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D548682D465A7A003F5FE0 /* CIImageHelper.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +73,7 @@
 		946C3E0F2CCA235800B20BC8 /* imconvert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = imconvert.swift; sourceTree = "<group>"; };
 		946C3E582CDA257200B20BC8 /* yolo11n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11n.mlpackage; sourceTree = "<group>"; };
 		94B58E532D416302008833C5 /* colourhex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = colourhex.swift; sourceTree = "<group>"; };
+		94D548682D465A7A003F5FE0 /* CIImageHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CIImageHelper.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +126,7 @@
 			children = (
 				946C3DF72CAE580B00B20BC8 /* Utilities */,
 				946C3DF32CAE579000B20BC8 /* VideoCapture.swift */,
+				94D548682D465A7A003F5FE0 /* CIImageHelper.swift */,
 				946C3E0F2CCA235800B20BC8 /* imconvert.swift */,
 				946C3E0D2CCA21F300B20BC8 /* Box.swift */,
 				946C3E072CAEDB3D00B20BC8 /* Control.swift */,
@@ -329,6 +332,7 @@
 				942A33142CAD26EC00C11CEB /* Visual_ClutterApp.swift in Sources */,
 				946C3E022CAE58DA00B20BC8 /* yolov8l.mlpackage in Sources */,
 				946C3E592CDA257200B20BC8 /* yolo11n.mlpackage in Sources */,
+				94D548692D465A7A003F5FE0 /* CIImageHelper.swift in Sources */,
 				946C3E062CAE58DA00B20BC8 /* yolov8x.mlpackage in Sources */,
 				946C3E102CCA235800B20BC8 /* imconvert.swift in Sources */,
 			);

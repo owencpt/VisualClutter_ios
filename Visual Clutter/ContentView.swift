@@ -15,9 +15,6 @@ import Vision
 struct CameraView: UIViewRepresentable {
     let videoCapture: VideoCapture
     
-    @Binding var processedImage: CGImage? // Binding to receive the processed frame
-
-
     func makeCoordinator() -> Coordinator {
         Coordinator(videoCapture: videoCapture)
     }
@@ -57,31 +54,9 @@ struct CameraView: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: Context) {
             // Update the preview layer's frame
             videoCapture.previewLayer?.frame = uiView.bounds
-            
-            // If a processed image is available, display it
-            if let processedImage = processedImage {
-                // Remove previous layers
-                uiView.layer.sublayers?.removeAll()
-                
-                // Create a new layer for the processed image
-                let imageLayer = CALayer()
-                imageLayer.contents = processedImage
-                
-                // Scale the image layer to fill the view
-                imageLayer.frame = uiView.bounds
-                imageLayer.contentsGravity = .resizeAspectFill // Maintain aspect ratio while filling the view
-                
-                // Add the image layer to the view
-                uiView.layer.addSublayer(imageLayer)
-            } else {
-                // If no processed image, ensure only the live feed is displayed
-                uiView.layer.sublayers?.removeAll()
-                if let previewLayer = videoCapture.previewLayer {
-                    uiView.layer.addSublayer(previewLayer)
-                }
-            }
-        }
+        
     
+    }
 
 }
 
@@ -99,9 +74,9 @@ struct ContentView: View {
     @State private var isMenuOpen = false
     @State private var modelStatus = false
     
-    @State private var scanTimeRemaining = 10
-    @State private var timer: Timer?
-    @State private var showTimeoutMessage = false
+//    @State private var scanTimeRemaining = 10
+//    @State private var timer: Timer?
+//    @State private var showTimeoutMessage = false
 
 
 
@@ -110,15 +85,16 @@ struct ContentView: View {
     var body: some View {
         ZStack{
             if modelStatus{
-                CameraView(videoCapture: videoCapture, processedImage: $videoCapture.processedImage)
+                CameraView(videoCapture: videoCapture)
                     .edgesIgnoringSafeArea(.all)
                 
                 
                 // Add additional UI elements only when processedImage is nil
                 if videoCapture.processedImage == nil {
                     VStack {
-                        if showTimeoutMessage {
-                            Text("Unable to find \(videoCapture.selected) on the current surface. Please try another one.")
+                        if videoCapture.rect == .zero {
+                            // If rect is .zero, it means no object was detected.
+                            Text("No \(videoCapture.selected) detected. Please move the camera slowly to scan the area.")
                                 .foregroundColor(.white)
                                 .font(.headline)
                                 .multilineTextAlignment(.center)
@@ -126,8 +102,14 @@ struct ContentView: View {
                                 .background(Color.black.opacity(0.7))
                                 .cornerRadius(10)
                                 .padding(.top, 50)
+                                .padding(.horizontal, 20)  // Add padding to the left and right for spacing
+                                .frame(maxWidth: 350)      // Set a max width to avoid text box stretching too wide
+                                .lineLimit(2)              // Allow up to 2 lines
+                                .minimumScaleFactor(0.5)   // Scale down the text if it exceeds the space
+
                         } else {
-                            Text("No \(videoCapture.selected) detected. Please move the camera slowly to scan the area.")
+                            // If rect is not .zero, it means an object was detected.
+                            Text("You have found the \(videoCapture.selected)!")
                                 .foregroundColor(.white)
                                 .font(.headline)
                                 .multilineTextAlignment(.center)
@@ -140,10 +122,8 @@ struct ContentView: View {
                         Spacer() // Push the text to the top
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity) // Ensure the VStack takes up the full screen
-                    .onAppear {
-                        startScanTimer()
-                    }
                 }
+
                         
 
             }else{
@@ -216,7 +196,7 @@ struct ContentView: View {
                     }
                     modelStatus.toggle()
                 }, label: {
-                    Text(modelStatus ? "Stop Looking For..." : "Start Looking For...")
+                    Text(modelStatus ? "Stop Scan" : "Start Scan")
                         .font(.headline)
                         .foregroundColor(.white)
                         .padding()
@@ -339,19 +319,13 @@ struct ContentView: View {
         videoCapture.selected = item
                 
     }
-    
-    func startScanTimer() {
-        scanTimeRemaining = 10
-        showTimeoutMessage = false
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            if scanTimeRemaining > 0 {
-                scanTimeRemaining -= 1
-            } else {
-                timer?.invalidate()
-                // Show the timeout message after 10 seconds
-                showTimeoutMessage = true
-            }
-        }
-    }
-    
 }
+
+
+
+
+
+
+
+
+

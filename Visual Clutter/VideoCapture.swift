@@ -11,6 +11,8 @@
 //  the capture session. It also provides methods to start and stop video capture and delivers captured frames
 //  to a delegate implementing the VideoCaptureDelegate protocol.
 
+// The code bellow was altered based on the ultralytics code.
+
 import AVFoundation
 import CoreVideo
 import UIKit
@@ -46,6 +48,7 @@ public class VideoCapture: NSObject,ObservableObject {
     @Published var label:String = "cup"
     @Published var selected:String = "cup"
     @Published var processedImage: CGImage?
+    @Published var shouldApplyBlur = false
 
 
     let captureDevice = bestCaptureDevice()
@@ -121,12 +124,14 @@ public class VideoCapture: NSObject,ObservableObject {
 
         // Commit configuration to finalize setup
         captureSession.commitConfiguration()
+        captureSession.startRunning()
 
         return true
     }
 
     // Starts the video capture session.
     public func start() {
+        self.rect = .zero
         queue.async {
             if !self.captureSession.isRunning {
                 self.captureSession.startRunning()
@@ -139,6 +144,7 @@ public class VideoCapture: NSObject,ObservableObject {
 
     // Stops the video capture session.
     public func stop() {
+        self.rect = .zero
         if captureSession.isRunning {
             captureSession.stopRunning()
                     
@@ -196,56 +202,92 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     // Method to process the frame using Vision and Core ML
     func processFrame(pixelBuffer: CVPixelBuffer) {
         
+        // Convert CVPixelBuffer to CIImage
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+
+        // Resize the image to [384, 640]
+        let resizedImage = resizeImage(ciImage, to: CGSize(width: 384, height: 640))
+
+        // Convert the resized CIImage back to CVPixelBuffer
+        guard let resizedPixelBuffer = resizedImage.toPixelBuffer() else {
+            print("Failed to convert resized CIImage to CVPixelBuffer.")
+            return
+        }
+        
         //TODO: set preference for hardware
         let configuration = MLModelConfiguration()
         configuration.computeUnits = .cpuAndGPU // Use both CPU and GPU
         
         // Load the Core ML model
-        let model = try! yolov8l(configuration: .init()).model
+        let model = try! yolov8m(configuration: .init()).model
         //        print("model loaded")
-            
+        
         /// VNCoreMLModel
         let detector = try! VNCoreMLModel(for: model)
         detector.featureProvider = ThresholdProvider()
         
         
         
-        // Retrieves Data From Results
+//        // Retrieves Data From Results
+//
+//        let request = VNCoreMLRequest(model: detector) { request, error in
+//            guard let results = request.results as? [VNRecognizedObjectObservation] else {
+//                print("Failed to get results or cast to VNRecognizedObjectObservation")
+//                return
+//            }
+//            
+//            
+//            for observation in results {
+//                //Extract the first label and its confidence
+//                if let topLabel = observation.labels.first {
+//                    if self.selected == topLabel.identifier && topLabel.confidence >= 0.5{
+//                        DispatchQueue.main.async {
+//                            
+//                            self.rect = self.scaleBoundingBox(observation.boundingBox)
+//                            
+//                            
+//                        }
+//                        break
+//                    }
+//                    else{
+//                        DispatchQueue.main.async {
+//                            self.rect = .zero
+//                            self.processedImage = nil
+//                        
+//                        }
+//                    }
+//                }
+//            }
+//        }
         
+        // Create the Vision request
         let request = VNCoreMLRequest(model: detector) { request, error in
-            guard let results = request.results as? [VNRecognizedObjectObservation] else {
-                print("Failed to get results or cast to VNRecognizedObjectObservation")
+            guard let results = request.results as? [VNRecognizedObjectObservation],
+                  let bestObservation = results.max(by: { $0.confidence < $1.confidence }) // Get highest confidence
+            else {
+                DispatchQueue.main.async {
+                    self.rect = .zero
+                    self.processedImage = nil
+                }
                 return
             }
             
-            
-            for observation in results {
-                //Extract the first label and its confidence
-                if let topLabel = observation.labels.first {
-                    if self.selected == topLabel.identifier && topLabel.confidence >= 0.5{
-                        DispatchQueue.main.async {
-                            
-                            self.rect = self.scaleBoundingBox(observation.boundingBox)
-                            
-                            self.applyBlurOutsideRect(to: pixelBuffer, in: self.rect)
-                            
-                            
-                        }
-                        break
-                    }
-                    else{
-                        DispatchQueue.main.async {
-                            self.rect = .zero
-                            self.processedImage = nil
-                        
-                        }
-                    }
+            if let topLabel = bestObservation.labels.first,
+               self.selected == topLabel.identifier, topLabel.confidence >= 0.5 {
+
+                DispatchQueue.main.async {
+                    self.rect = self.scaleBoundingBox(bestObservation.boundingBox)
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.rect = .zero
+                    self.processedImage = nil
                 }
             }
         }
 
         // Perform the Vision request on the pixel buffer (video frame)
-        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+        let handler = VNImageRequestHandler(cvPixelBuffer: resizedPixelBuffer, options: [:])
         try? handler.perform([request])
     }
     
@@ -256,9 +298,9 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     
 
         let rect =  CGRect(
-            x: (boundingBox.origin.x * screenWidth) ,
-            y: (1 - boundingBox.origin.y - boundingBox.height) * screenHeight - 40, // Flip Y-axis
-            width: boundingBox.width * screenWidth,
+            x: (boundingBox.origin.x * screenWidth-20) ,
+            y: (1 - boundingBox.origin.y - boundingBox.height) * screenHeight-50, // Flip Y-axis
+            width: boundingBox.width * screenWidth + (2 * padding),
             height: boundingBox.height * screenHeight + (2 * padding)
         )
         
@@ -267,100 +309,11 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
         
     }
     
-    
-    func applyBlurOutsideRect(to pixelBuffer: CVPixelBuffer, in rect: CGRect) {
-        // Print the input CGRect
-        print("Input CGRect: \(rect)")
-
-        // Convert CVPixelBuffer to CIImage
-        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        
-        // Scale the CIImage to match the CameraView's aspect ratio
-        let viewSize = UIScreen.main.bounds.size
-        let (scaledImage, scale) = scaleImageToMatchView(ciImage, viewSize: viewSize)
-        
-        // Adjust the CGRect for scaling
-        let adjustedRect = adjustRectForScaling(rect, scale: scale)
-        
-        
-        
-        // Print the input image extent
-        print("Input Image Extent: \(ciImage.extent)")
-
-        // Apply a blur filter to the entire image
-        let blurFilter = CIFilter(name: "CIGaussianBlur")
-        blurFilter?.setValue(scaledImage, forKey: kCIInputImageKey)
-        blurFilter?.setValue(5.0, forKey: kCIInputRadiusKey) // Adjust blur intensity
-        
-        // Get the blurred image
-        guard let blurredImage = blurFilter?.outputImage else {
-            print("Failed to apply blur filter.")
-            return
-        }
-
-        // Create a mask for the rectangle region
-        let maskFilter = CIFilter(name: "CICrop")
-        maskFilter?.setValue(scaledImage, forKey: kCIInputImageKey)
-        maskFilter?.setValue(CIVector(cgRect: adjustedRect), forKey: "inputRectangle")
-        
-        guard let maskedImage = maskFilter?.outputImage else {
-            print("CICrop filter failed to produce an output image.")
-            return
-        }
-
-        // Print the output image extent
-        print("Output Image Extent: \(maskedImage.extent)")
-
-        // Composite the original rectangle region back onto the blurred image
-        let compositeFilter = CIFilter(name: "CISourceOverCompositing")
-        compositeFilter?.setValue(maskedImage, forKey: kCIInputImageKey)
-        compositeFilter?.setValue(blurredImage, forKey: kCIInputBackgroundImageKey)
-        
-        // Get the final output image
-        guard let outputImage = compositeFilter?.outputImage else {
-            print("Failed to composite the final image.")
-            return
-        }
-
-        // Convert the CIImage to CGImage
-        let context = CIContext()
-        if let cgImage = context.createCGImage(outputImage, from: outputImage.extent) {
-            DispatchQueue.main.async {
-                self.processedImage = cgImage // Update the processed image
-            }
-        } else {
-            print("Failed to convert CIImage to CGImage.")
-        }
+    // Helper function to resize CIImage
+    func resizeImage(_ image: CIImage, to size: CGSize) -> CIImage {
+        let scaleX = size.width / image.extent.width
+        let scaleY = size.height / image.extent.height
+        return image.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
     }
-    
-    func scaleImageToMatchView(_ ciImage: CIImage, viewSize: CGSize) -> (CIImage, CGFloat) {
-        let imageSize = ciImage.extent.size
-        let scaleX = viewSize.width / imageSize.width
-        let scaleY = viewSize.height / imageSize.height
-        let scale = max(scaleX, scaleY) // Scale to fill the view
-        
-        let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-        return (scaledImage, scale)
-    }
-    
-    func adjustRectForScaling(_ rect: CGRect, scale: CGFloat) -> CGRect {
-        
-        let xpadding: CGFloat = 60.0
-        let ypadding: CGFloat = 50.0
-
-
-        let myrect = CGRect(
-            x: rect.origin.x * scale + xpadding,
-            y: rect.origin.y * scale + ypadding,
-            width: rect.width,
-            height: rect.height
-        )
-        return myrect
-    }
-    
-    
-    
-   
     
 }
-    
