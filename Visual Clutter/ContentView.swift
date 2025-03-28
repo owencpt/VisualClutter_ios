@@ -89,6 +89,10 @@ struct ContentView: View {
                     .edgesIgnoringSafeArea(.all)
                 
                 
+                if videoCapture.rect != .zero {
+                    DarkenedOverlayView(boundingRect: videoCapture.rect)
+                }
+                
                 // Add additional UI elements only when processedImage is nil
                 if videoCapture.processedImage == nil {
                     VStack {
@@ -99,7 +103,7 @@ struct ContentView: View {
                                 .font(.headline)
                                 .multilineTextAlignment(.center)
                                 .padding()
-                                .background(Color.black.opacity(0.7))
+                                .background(Color.black.opacity(0.9))
                                 .cornerRadius(10)
                                 .padding(.top, 50)
                                 .padding(.horizontal, 20)  // Add padding to the left and right for spacing
@@ -114,7 +118,7 @@ struct ContentView: View {
                                 .font(.headline)
                                 .multilineTextAlignment(.center)
                                 .padding()
-                                .background(Color.black.opacity(0.7))
+                                .background(Color.black.opacity(0.9))
                                 .cornerRadius(10)
                                 .padding(.top, 50)
                         }
@@ -322,6 +326,49 @@ struct ContentView: View {
 }
 
 
+struct DarkenedOverlayView: View {
+    let boundingRect: CGRect
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // Top overlay
+                Rectangle()
+                    .fill(Color.black.opacity(0.75))
+                    .frame(width: geometry.size.width,
+                           height: boundingRect.minY+80) // Keeps the height the same
+                    .position(x: geometry.size.width / 2,
+                              y: boundingRect.minY / 2+6) // This will position it above the bounding box
+                
+                // Bottom overlay
+                Rectangle()
+                    .fill(Color.black.opacity(0.75))
+                    .frame(width: geometry.size.width,
+                           height: geometry.size.height - boundingRect.maxY)
+                    .position(x: geometry.size.width / 2,
+                              y: geometry.size.height - (geometry.size.height - boundingRect.maxY) / 2+48)
+                
+                // Left overlay
+                Rectangle()
+                    .fill(Color.black.opacity(0.75))
+                    .frame(width: boundingRect.minX,
+                           height: boundingRect.height+2)
+                    .position(x: boundingRect.minX / 2,
+                              y: boundingRect.midY + 47)
+                
+                // Right overlay
+                Rectangle()
+                    .fill(Color.black.opacity(0.75))
+                    .frame(width: geometry.size.width - boundingRect.maxX,
+                           height: boundingRect.height+2)
+                    .position(x: geometry.size.width - (geometry.size.width - boundingRect.maxX) / 2,
+                              y: boundingRect.midY+47)
+            }
+            .allowsHitTesting(false) // Ensure this doesn't block interactions
+        }
+        .edgesIgnoringSafeArea(.all)
+    }
+}
 
 
 
